@@ -8,7 +8,7 @@ export interface GetResultInput {
 export class GetResult {
   constructor(private readonly resultRepository: ResultRepository) {}
 
-  async execute(_input: GetResultInput): Promise<ImportResult | null> {
-    throw new Error("GetResult not implemented");
+  async execute(input: GetResultInput): Promise<ImportResult | null> {
+    return this.resultRepository.getByJobId(input.jobId);
   }
 }

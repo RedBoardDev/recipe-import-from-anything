@@ -8,6 +8,10 @@
     "start": "node dist/index.js"
   },
   "dependencies": {
-    "fastify": "^4.27.0"
+    "@ria/application": "workspace:*",
+    "@ria/domain": "workspace:*",
+    "@ria/infrastructure": "workspace:*",
+    "fastify": "^4.27.0",
+    "zod": "^3.25.1"
   }
 }

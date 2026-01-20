@@ -8,7 +8,7 @@ export interface GetJobInput {
 export class GetJob {
   constructor(private readonly jobRepository: JobRepository) {}
 
-  async execute(_input: GetJobInput): Promise<ImportJob | null> {
-    throw new Error("GetJob not implemented");
+  async execute(input: GetJobInput): Promise<ImportJob | null> {
+    return this.jobRepository.getById(input.jobId);
   }
 }

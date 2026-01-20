@@ -7,7 +7,8 @@
     "paths": {
       "@ria/domain": ["packages/domain/src/index.ts"],
       "@ria/application": ["packages/application/src/index.ts"],
-      "@ria/pipelines": ["packages/pipelines/src/index.ts"]
+      "@ria/pipelines": ["packages/pipelines/src/index.ts"],
+      "@ria/infrastructure": ["packages/infrastructure/src/index.ts"]
     },
     "strict": true,
     "noEmit": true,
