@@ -1,18 +1,83 @@
-import type { ImportResult } from "@ria/domain";
-import type { JobRepository, ResultRepository, StepRunRepository } from "../ports/index";
+import type { ImportError, ImportJob, ImportResult } from "@ria/domain";
+import type {
+  JobRepository,
+  PipelineRunner,
+  ResultRepository
+} from "../ports/index";
 
 export interface ExecuteJobInput {
   jobId: string;
 }
 
+const nowIso = (): string => new Date().toISOString();
+
+const toImportError = (error: unknown): ImportError => {
+  if (error instanceof Error) {
+    return {
+      code: "EXECUTE_JOB_FAILED",
+      message: error.message
+    };
+  }
+
+  return {
+    code: "EXECUTE_JOB_FAILED",
+    message: "Unknown error"
+  };
+};
+
+const withStatus = (
+  job: ImportJob,
+  status: ImportJob["status"],
+  updates: Partial<ImportJob> = {}
+): ImportJob => ({
+  ...job,
+  status,
+  updatedAt: nowIso(),
+  ...updates
+});
+
 export class ExecuteJob {
   constructor(
     private readonly jobRepository: JobRepository,
     private readonly resultRepository: ResultRepository,
-    private readonly stepRunRepository: StepRunRepository
+    private readonly pipelineRunner: PipelineRunner
   ) {}
 
-  async execute(_input: ExecuteJobInput): Promise<ImportResult> {
-    throw new Error("ExecuteJob not implemented");
+  async execute({ jobId }: ExecuteJobInput): Promise<ImportResult> {
+    const job = await this.jobRepository.getById(jobId);
+
+    if (!job) {
+      throw new Error(`Job not found: ${jobId}`);
+    }
+
+    const runningJob = withStatus(job, "RUNNING", {
+      progressPct: 0,
+      currentStep: undefined
+    });
+
+    await this.jobRepository.update(runningJob);
+
+    try {
+      const result = await this.pipelineRunner.run(runningJob);
+      await this.resultRepository.save(jobId, result);
+
+      const succeededJob = withStatus(runningJob, "SUCCEEDED", {
+        progressPct: 100,
+        currentStep: undefined
+      });
+
+      await this.jobRepository.update(succeededJob);
+
+      return result;
+    } catch (error) {
+      const failure = toImportError(error);
+      const failedJob = withStatus(runningJob, "FAILED", {
+        errors: [...runningJob.errors, failure],
+        currentStep: undefined
+      });
+
+      await this.jobRepository.update(failedJob);
+      throw error;
+    }
   }
 }

@@ -15,3 +15,7 @@ export interface Pipeline {
 export interface PipelineRegistry {
   get(sourceType: SourceType): Pipeline;
 }
+
+export { NoopPipeline } from "./noop-pipeline";
+export { StaticPipelineRegistry } from "./registry";
+export { RegistryPipelineRunner } from "./pipeline-runner";

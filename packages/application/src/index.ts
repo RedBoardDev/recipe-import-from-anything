@@ -4,6 +4,7 @@ export type {
   JobQueue,
   JobRepository,
   Logger,
+  PipelineRunner,
   ResultRepository,
   StepRun,
   StepRunRepository

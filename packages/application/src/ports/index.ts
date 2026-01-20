@@ -60,3 +60,5 @@ export interface Logger {
 export interface EventBus {
   publish(topic: string, payload: Record<string, unknown>): Promise<void>;
 }
+
+export type { PipelineRunner } from "./pipeline-runner";
