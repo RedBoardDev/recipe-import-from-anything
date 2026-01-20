@@ -105,7 +105,7 @@ describe("Postgres repositories", () => {
     await jobRepository.create(job);
 
     const runId = await stepRunRepository.startRun(job.id, "step-1");
-    await stepRunRepository.finishRun(runId, "SUCCEEDED", { note: "ok" });
+    await stepRunRepository.finishRun(runId, "SUCCEEDED", { meta: { note: "ok" } });
 
     const runs = await stepRunRepository.listByJobId(job.id);
     expect(runs).toHaveLength(1);

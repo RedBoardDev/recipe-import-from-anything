@@ -1,7 +1,7 @@
 import { beforeAll, beforeEach, afterAll, describe, expect, it } from "vitest";
 import { setTimeout as sleep } from "node:timers/promises";
 import { buildServer } from "./index";
-import { ExecuteJob } from "@ria/application";
+import { ExecuteJob, LinearWorkflowRunner } from "@ria/application";
 import { NoopPipeline, RegistryPipelineRunner, StaticPipelineRegistry } from "@ria/pipelines";
 import {
   BullMqWorkerRuntime,
@@ -11,6 +11,7 @@ import {
   getRedisConnection,
   PostgresJobRepository,
   PostgresResultRepository,
+  PostgresStepRunRepository,
   runMigrations
 } from "@ria/infrastructure";
 
@@ -38,6 +39,7 @@ describe("API import flow", () => {
   const db = createDb(databaseUrl);
   const jobRepository = new PostgresJobRepository(db);
   const resultRepository = new PostgresResultRepository(db);
+  const stepRunRepository = new PostgresStepRunRepository(db);
   const queueName = process.env.QUEUE_NAME ?? "import-jobs";
   const redisConnection = getRedisConnection();
 
@@ -52,7 +54,8 @@ describe("API import flow", () => {
       artifactStore: {
         put: async () => "artifact://noop"
       }
-    }
+    },
+    new LinearWorkflowRunner(jobRepository, stepRunRepository)
   );
 
   const executeJob = new ExecuteJob(jobRepository, resultRepository, pipelineRunner);
@@ -67,6 +70,7 @@ describe("API import flow", () => {
   });
 
   beforeEach(async () => {
+    await db.deleteFrom("job_step_runs").execute();
     await db.deleteFrom("job_results").execute();
     await db.deleteFrom("import_jobs").execute();
   });

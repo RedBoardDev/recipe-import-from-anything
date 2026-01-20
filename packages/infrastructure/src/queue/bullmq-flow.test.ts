@@ -2,7 +2,7 @@ import { beforeAll, beforeEach, afterAll, describe, expect, it } from "vitest";
 import { randomUUID } from "node:crypto";
 import { setTimeout as sleep } from "node:timers/promises";
 import type { ImportJob } from "@ria/domain";
-import { ExecuteJob } from "@ria/application";
+import { ExecuteJob, LinearWorkflowRunner } from "@ria/application";
 import { NoopPipeline, RegistryPipelineRunner, StaticPipelineRegistry } from "@ria/pipelines";
 import {
   BullMqJobQueue,
@@ -11,6 +11,7 @@ import {
   destroyDb,
   getDatabaseUrl,
   getRedisConnection,
+  PostgresStepRunRepository,
   PostgresJobRepository,
   PostgresResultRepository,
   runMigrations
@@ -69,12 +70,14 @@ describe("BullMQ job flow", () => {
   const db = createDb(databaseUrl);
   const jobRepository = new PostgresJobRepository(db);
   const resultRepository = new PostgresResultRepository(db);
+  const stepRunRepository = new PostgresStepRunRepository(db);
 
   beforeAll(async () => {
     await runMigrations(databaseUrl);
   });
 
   beforeEach(async () => {
+    await db.deleteFrom("job_step_runs").execute();
     await db.deleteFrom("job_results").execute();
     await db.deleteFrom("import_jobs").execute();
   });
@@ -87,9 +90,11 @@ describe("BullMQ job flow", () => {
     const job = makeJob();
     await jobRepository.create(job);
 
+    const workflowRunner = new LinearWorkflowRunner(jobRepository, stepRunRepository);
     const pipelineRunner = new RegistryPipelineRunner(
       new StaticPipelineRegistry([new NoopPipeline("url")]),
-      { logger, artifactStore }
+      { logger, artifactStore },
+      workflowRunner
     );
 
     const executeJob = new ExecuteJob(

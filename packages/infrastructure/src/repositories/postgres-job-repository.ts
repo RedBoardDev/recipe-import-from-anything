@@ -54,13 +54,13 @@ export class PostgresJobRepository implements JobRepository {
         id: job.id,
         user_id: job.userId,
         source_type: job.sourceType,
-        payload: toJsonValue(job.payload),
-        options: toJsonValue(job.options),
+        payload: toJsonValue(job.payload, {}),
+        options: toJsonValue(job.options, {}),
         status: job.status,
         progress_pct: job.progressPct,
         current_step: job.currentStep ?? null,
-        warnings: toJsonValue(job.warnings),
-        errors: toJsonValue(job.errors),
+        warnings: toJsonValue(job.warnings, []),
+        errors: toJsonValue(job.errors, []),
         created_at: new Date(job.createdAt),
         updated_at: new Date(job.updatedAt)
       })
@@ -73,13 +73,13 @@ export class PostgresJobRepository implements JobRepository {
       .set({
         user_id: job.userId,
         source_type: job.sourceType,
-        payload: toJsonValue(job.payload),
-        options: toJsonValue(job.options),
+        payload: toJsonValue(job.payload, {}),
+        options: toJsonValue(job.options, {}),
         status: job.status,
         progress_pct: job.progressPct,
         current_step: job.currentStep ?? null,
-        warnings: toJsonValue(job.warnings),
-        errors: toJsonValue(job.errors),
+        warnings: toJsonValue(job.warnings, []),
+        errors: toJsonValue(job.errors, []),
         updated_at: new Date(job.updatedAt)
       })
       .where("id", "=", job.id)

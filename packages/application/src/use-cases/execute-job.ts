@@ -1,4 +1,5 @@
 import type { ImportError, ImportJob, ImportResult } from "@ria/domain";
+import { StepExecutionError } from "../workflow/index";
 import type {
   JobRepository,
   PipelineRunner,
@@ -12,6 +13,14 @@ export interface ExecuteJobInput {
 const nowIso = (): string => new Date().toISOString();
 
 const toImportError = (error: unknown): ImportError => {
+  if (error instanceof StepExecutionError) {
+    return {
+      code: "STEP_FAILED",
+      message: error.message,
+      stepId: error.stepId
+    };
+  }
+
   if (error instanceof Error) {
     return {
       code: "EXECUTE_JOB_FAILED",
@@ -61,7 +70,8 @@ export class ExecuteJob {
       const result = await this.pipelineRunner.run(runningJob);
       await this.resultRepository.save(jobId, result);
 
-      const succeededJob = withStatus(runningJob, "SUCCEEDED", {
+      const latestJob = (await this.jobRepository.getById(jobId)) ?? runningJob;
+      const succeededJob = withStatus(latestJob, "SUCCEEDED", {
         progressPct: 100,
         currentStep: undefined
       });
@@ -71,8 +81,9 @@ export class ExecuteJob {
       return result;
     } catch (error) {
       const failure = toImportError(error);
-      const failedJob = withStatus(runningJob, "FAILED", {
-        errors: [...runningJob.errors, failure],
+      const latestJob = (await this.jobRepository.getById(jobId)) ?? runningJob;
+      const failedJob = withStatus(latestJob, "FAILED", {
+        errors: [...latestJob.errors, failure],
         currentStep: undefined
       });
 

@@ -29,12 +29,12 @@ export class PostgresResultRepository implements ResultRepository {
       .insertInto("job_results")
       .values({
         job_id: jobId,
-        result: toJsonValue(result),
+        result: toJsonValue(result, {}),
         created_at: new Date()
       })
       .onConflict((conflict) =>
         conflict.column("job_id").doUpdateSet({
-          result: toJsonValue(result),
+          result: toJsonValue(result, {}),
           created_at: new Date()
         })
       )

@@ -20,9 +20,9 @@ export interface StepRunRepository {
   finishRun(
     runId: string,
     status: "SUCCEEDED" | "FAILED",
-    meta?: Record<string, unknown>
+    data?: StepRunData
   ): Promise<void>;
-  failRun(runId: string, error: ImportError): Promise<void>;
+  failRun(runId: string, error: ImportError, data?: StepRunData): Promise<void>;
   listByJobId(jobId: string): Promise<StepRun[]>;
 }
 
@@ -35,6 +35,11 @@ export interface StepRun {
   endedAt?: string;
   durationMs?: number;
   error?: ImportError;
+  outputRef?: string;
+  meta?: Record<string, unknown>;
+}
+
+export interface StepRunData {
   outputRef?: string;
   meta?: Record<string, unknown>;
 }

@@ -1,15 +1,15 @@
 import type { ImportJob, ImportResult, SourceType } from "@ria/domain";
-import type { ArtifactStore, Logger } from "@ria/application";
+import type { ArtifactStore, Logger, WorkflowDefinition } from "@ria/application";
 
 export interface PipelineContext {
   logger: Logger;
   artifactStore: ArtifactStore;
 }
 
-export interface Pipeline {
+export interface Pipeline<O = unknown> {
   id: string;
   sourceType: SourceType;
-  run(job: ImportJob, ctx: PipelineContext): Promise<ImportResult>;
+  createWorkflow(job: ImportJob): WorkflowDefinition<ImportJob, O>;
 }
 
 export interface PipelineRegistry {

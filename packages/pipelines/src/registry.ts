@@ -5,7 +5,9 @@ export class StaticPipelineRegistry implements PipelineRegistry {
   private readonly pipelines: Map<SourceType, Pipeline>;
 
   constructor(pipelines: Pipeline[]) {
-    this.pipelines = new Map(pipelines.map((pipeline) => [pipeline.sourceType, pipeline]));
+    this.pipelines = new Map(
+      pipelines.map((pipeline) => [pipeline.sourceType, pipeline])
+    );
   }
 
   get(sourceType: SourceType): Pipeline {

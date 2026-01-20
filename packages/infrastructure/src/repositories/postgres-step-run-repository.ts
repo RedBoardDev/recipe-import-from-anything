@@ -1,5 +1,5 @@
 import type { ImportError } from "@ria/domain";
-import type { StepRun, StepRunRepository } from "@ria/application";
+import type { StepRun, StepRunData, StepRunRepository } from "@ria/application";
 import { sql } from "kysely";
 import type { Kysely } from "kysely";
 import { randomUUID } from "node:crypto";
@@ -56,7 +56,7 @@ export class PostgresStepRunRepository implements StepRunRepository {
   async finishRun(
     runId: string,
     status: "SUCCEEDED" | "FAILED",
-    meta?: Record<string, unknown>
+    data?: StepRunData
   ): Promise<void> {
     await this.db
       .updateTable("job_step_runs")
@@ -64,20 +64,23 @@ export class PostgresStepRunRepository implements StepRunRepository {
         status,
         ended_at: sql`now()`,
         duration_ms: sql<number>`(extract(epoch from (now() - started_at)) * 1000)::int`,
-        meta: meta ? toJsonValue(meta) : null
+        meta: data?.meta ? toJsonValue(data.meta) : null,
+        output_ref: data?.outputRef ?? null
       })
       .where("id", "=", runId)
       .execute();
   }
 
-  async failRun(runId: string, error: ImportError): Promise<void> {
+  async failRun(runId: string, error: ImportError, data?: StepRunData): Promise<void> {
     await this.db
       .updateTable("job_step_runs")
       .set({
         status: "FAILED",
         ended_at: sql`now()`,
         duration_ms: sql<number>`(extract(epoch from (now() - started_at)) * 1000)::int`,
-        error: toJsonValue(error)
+        error: toJsonValue(error),
+        meta: data?.meta ? toJsonValue(data.meta) : null,
+        output_ref: data?.outputRef ?? null
       })
       .where("id", "=", runId)
       .execute();
