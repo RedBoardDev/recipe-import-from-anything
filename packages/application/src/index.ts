@@ -5,6 +5,7 @@ export type {
   JobRepository,
   Logger,
   ResultRepository,
+  StepRun,
   StepRunRepository
 } from "./ports/index";
 export { CreateJobFromText } from "./use-cases/create-job-from-text";

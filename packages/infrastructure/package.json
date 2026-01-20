@@ -1,0 +1,20 @@
+{
+  "name": "@ria/infrastructure",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@ria/application": "workspace:*",
+    "@ria/domain": "workspace:*",
+    "kysely": "^0.28.5",
+    "node-pg-migrate": "^7.9.0",
+    "pg": "^8.13.1"
+  },
+  "devDependencies": {
+    "@types/pg": "^8.11.10"
+  }
+}
