@@ -1,15 +1,23 @@
 {
   "name": "recipe-import-from-anything",
   "private": true,
-  "packageManager": "yarn@4.0.0",
+  "type": "module",
+  "packageManager": "yarn@4.6.0",
   "workspaces": [
     "apps/*",
     "packages/*"
   ],
   "scripts": {
-    "build": "yarn workspaces foreach -pt run build",
-    "lint": "yarn workspaces foreach -pt run lint",
-    "test": "yarn workspaces foreach -pt run test",
-    "typecheck": "yarn workspaces foreach -pt run typecheck"
+    "dev:api": "yarn workspace @ria/api dev",
+    "dev:worker": "yarn workspace @ria/worker dev",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.1",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3",
+    "vitest": "^2.1.8"
   }
 }
