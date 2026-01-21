@@ -4,7 +4,7 @@ import type { Database } from "./types";
 
 export const getDatabaseUrl = (): string =>
   process.env.DATABASE_URL ??
-  "postgres://recipe:recipe@localhost:5432/recipe_import";
+  "postgres://recipe:recipe@localhost:5433/recipe_import";
 
 export const createDb = (databaseUrl: string = getDatabaseUrl()): Kysely<Database> => {
   const pool = new Pool({ connectionString: databaseUrl });

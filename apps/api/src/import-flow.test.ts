@@ -1,8 +1,10 @@
 import { beforeAll, beforeEach, afterAll, describe, expect, it } from "vitest";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { setTimeout as sleep } from "node:timers/promises";
 import { buildServer } from "./index";
 import { ExecuteJob, LinearWorkflowRunner } from "@ria/application";
-import { NoopPipeline, RegistryPipelineRunner, StaticPipelineRegistry } from "@ria/pipelines";
+import { RegistryPipelineRunner, StaticPipelineRegistry, TextPipeline, UrlPipeline } from "@ria/pipelines";
 import {
   BullMqWorkerRuntime,
   createDb,
@@ -42,9 +44,17 @@ describe("API import flow", () => {
   const stepRunRepository = new PostgresStepRunRepository(db);
   const queueName = process.env.QUEUE_NAME ?? "import-jobs";
   const redisConnection = getRedisConnection();
+  const fixtureHtml = readFileSync(
+    join(process.cwd(), "fixtures", "url", "simple-recipe.html"),
+    "utf-8"
+  );
+  const fixtureText = readFileSync(
+    join(process.cwd(), "fixtures", "text", "simple-recipe.txt"),
+    "utf-8"
+  );
 
   const pipelineRunner = new RegistryPipelineRunner(
-    new StaticPipelineRegistry([new NoopPipeline("url")]),
+    new StaticPipelineRegistry([new UrlPipeline("url"), new TextPipeline("text")]),
     {
       logger: {
         info: () => undefined,
@@ -53,7 +63,15 @@ describe("API import flow", () => {
       },
       artifactStore: {
         put: async () => "artifact://noop"
-      }
+      },
+        fetchProvider: {
+          fetchHtml: async (url: string) => ({
+            url,
+            status: 200,
+            headers: { "content-type": "text/html" },
+            body: fixtureHtml
+          })
+        }
     },
     new LinearWorkflowRunner(jobRepository, stepRunRepository)
   );
@@ -111,7 +129,35 @@ describe("API import flow", () => {
 
     expect(resultResponse.statusCode).toBe(200);
     const result = resultResponse.json() as { recipe: { name: string } };
-    expect(result.recipe.name).toBe("Noop Recipe");
+    expect(result.recipe.name).toBe("Simple Lemonade");
+
+    await app.close();
+  });
+
+  it("creates a text job and returns result", async () => {
+    const app = await buildServer();
+
+    const createResponse = await app.inject({
+      method: "POST",
+      url: "/v1/import/from-text",
+      headers: { "x-user-id": "user-1" },
+      payload: { text: fixtureText }
+    });
+
+    expect(createResponse.statusCode).toBe(200);
+    const { jobId } = createResponse.json() as { jobId: string };
+
+    await waitForJobStatus(jobRepository, jobId, "SUCCEEDED");
+
+    const resultResponse = await app.inject({
+      method: "GET",
+      url: `/v1/jobs/${jobId}/result`,
+      headers: { "x-user-id": "user-1" }
+    });
+
+    expect(resultResponse.statusCode).toBe(200);
+    const result = resultResponse.json() as { recipe: { name: string } };
+    expect(result.recipe.name).toBe("Simple Pancakes");
 
     await app.close();
   });

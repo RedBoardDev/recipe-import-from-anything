@@ -56,10 +56,34 @@ export interface ArtifactStore {
   ): Promise<string>;
 }
 
+export interface FetchResult {
+  url: string;
+  status: number;
+  headers: Record<string, string>;
+  body: string;
+}
+
+export interface FetchProvider {
+  fetchHtml(url: string): Promise<FetchResult>;
+}
+
 export interface Logger {
   info(message: string, meta?: Record<string, unknown>): void;
   warn(message: string, meta?: Record<string, unknown>): void;
   error(message: string, meta?: Record<string, unknown>): void;
+}
+
+export interface LLMProvider {
+  generate(prompt: string, options?: Record<string, unknown>): Promise<LLMResponse>;
+}
+
+export interface LLMResponse {
+  text: string;
+  usage?: {
+    inputTokens: number;
+    outputTokens: number;
+  };
+  model?: string;
 }
 
 export interface EventBus {

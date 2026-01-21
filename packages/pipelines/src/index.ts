@@ -1,9 +1,10 @@
 import type { ImportJob, ImportResult, SourceType } from "@ria/domain";
-import type { ArtifactStore, Logger, WorkflowDefinition } from "@ria/application";
+import type { ArtifactStore, FetchProvider, Logger, WorkflowDefinition } from "@ria/application";
 
 export interface PipelineContext {
   logger: Logger;
   artifactStore: ArtifactStore;
+  fetchProvider: FetchProvider;
 }
 
 export interface Pipeline<O = unknown> {
@@ -17,5 +18,7 @@ export interface PipelineRegistry {
 }
 
 export { NoopPipeline } from "./noop-pipeline";
+export { UrlPipeline } from "./url/url-pipeline";
+export { TextPipeline } from "./text/text-pipeline";
 export { StaticPipelineRegistry } from "./registry";
 export { RegistryPipelineRunner } from "./pipeline-runner";

@@ -13,7 +13,8 @@
     "bullmq": "^5.40.0",
     "kysely": "^0.28.5",
     "node-pg-migrate": "^7.9.0",
-    "pg": "^8.13.1"
+    "pg": "^8.13.1",
+    "pino": "^10.2.1"
   },
   "devDependencies": {
     "@types/pg": "^8.11.10"

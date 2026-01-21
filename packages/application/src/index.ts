@@ -1,8 +1,12 @@
 export type {
   ArtifactStore,
   EventBus,
+  FetchProvider,
+  FetchResult,
   JobQueue,
   JobRepository,
+  LLMProvider,
+  LLMResponse,
   Logger,
   PipelineRunner,
   ResultRepository,

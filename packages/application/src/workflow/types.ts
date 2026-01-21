@@ -1,10 +1,11 @@
 import type { ImportJob, ImportResult } from "@ria/domain";
-import type { ArtifactStore, Logger, StepRun } from "../ports/index";
+import type { ArtifactStore, FetchProvider, Logger, StepRun } from "../ports/index";
 
 export interface StepContext {
   job: ImportJob;
   logger: Logger;
   artifactStore: ArtifactStore;
+  fetchProvider: FetchProvider;
 }
 
 export interface StepRunOutput<T> {

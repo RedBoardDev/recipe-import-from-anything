@@ -132,7 +132,15 @@ describe("Workflow step logging", () => {
       ]),
       {
         logger: { info: () => undefined, warn: () => undefined, error: () => undefined },
-        artifactStore: { put: async () => "artifact://noop" }
+        artifactStore: { put: async () => "artifact://noop" },
+        fetchProvider: {
+          fetchHtml: async (url: string) => ({
+            url,
+            status: 200,
+            headers: { "content-type": "text/html" },
+            body: "<html></html>"
+          })
+        }
       },
       workflowRunner
     );
@@ -161,7 +169,15 @@ describe("Workflow step logging", () => {
       ]),
       {
         logger: { info: () => undefined, warn: () => undefined, error: () => undefined },
-        artifactStore: { put: async () => "artifact://noop" }
+        artifactStore: { put: async () => "artifact://noop" },
+        fetchProvider: {
+          fetchHtml: async (url: string) => ({
+            url,
+            status: 200,
+            headers: { "content-type": "text/html" },
+            body: "<html></html>"
+          })
+        }
       },
       workflowRunner
     );

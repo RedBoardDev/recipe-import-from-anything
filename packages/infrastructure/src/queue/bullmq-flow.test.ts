@@ -46,6 +46,15 @@ const artifactStore = {
   put: async (_key: string) => "artifact://noop"
 };
 
+const fetchProvider = {
+  fetchHtml: async (url: string) => ({
+    url,
+    status: 200,
+    headers: { "content-type": "text/html" },
+    body: "<html></html>"
+  })
+};
+
 const waitForStatus = async (
   jobRepository: PostgresJobRepository,
   jobId: string,
@@ -93,7 +102,7 @@ describe("BullMQ job flow", () => {
     const workflowRunner = new LinearWorkflowRunner(jobRepository, stepRunRepository);
     const pipelineRunner = new RegistryPipelineRunner(
       new StaticPipelineRegistry([new NoopPipeline("url")]),
-      { logger, artifactStore },
+      { logger, artifactStore, fetchProvider },
       workflowRunner
     );
 
