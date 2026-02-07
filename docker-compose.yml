@@ -24,7 +24,7 @@ services:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - TEMP_INPUTS_PATH=/app/tmp/inputs
-      - JWT_SECRET=${JWT_SECRET:-dev-secret}
+      - JWT_SECRET=${JWT_SECRET}
       - JWT_ISSUER=${JWT_ISSUER:-recipe-import}
       - JWT_AUDIENCE=${JWT_AUDIENCE:-recipe-import-api}
       - API_RATE_LIMIT_MAX=${API_RATE_LIMIT_MAX:-100}
