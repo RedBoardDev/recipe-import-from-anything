@@ -1,13 +1,21 @@
 {
-  "name": "@ria/domain",
+  "name": "@recipe/domain",
+  "version": "0.0.1",
   "private": true,
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "scripts": {
-    "build": "tsc -p tsconfig.json"
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "development": "./src/index.ts",
+      "default": "./dist/index.js"
+    }
   },
   "dependencies": {
-    "zod": "^3.25.1"
+    "uuid": "^11.0.0"
   }
 }

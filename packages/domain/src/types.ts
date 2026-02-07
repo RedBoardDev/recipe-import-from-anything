@@ -1,92 +1,26 @@
-export type SourceType =
-  | "url"
-  | "text"
-  | "pdf"
-  | "image"
-  | "video"
-  | "social"
-  | "integration";
+export type StepName = "collecting" | "extracting" | "finalizing";
 
-export type LlmPolicy = "never" | "fallback" | "always";
+export const DOMAIN_ERROR_CODES = {
+  JOB_NOT_FOUND: "JOB_NOT_FOUND",
+  RESULT_NOT_FOUND: "RESULT_NOT_FOUND",
+  JOB_NOT_SUCCEEDED: "JOB_NOT_SUCCEEDED",
+  JOB_NOT_CANCELABLE: "JOB_NOT_CANCELABLE",
+  INVALID_IDEMPOTENCY_KEY: "INVALID_IDEMPOTENCY_KEY",
+  UNAUTHORIZED: "UNAUTHORIZED",
+  FORBIDDEN: "FORBIDDEN",
+  INVALID_INPUT: "INVALID_INPUT",
+  INTERNAL_ERROR: "INTERNAL_ERROR",
+} as const;
 
-export interface ImportOptions {
-  llmPolicy: LlmPolicy;
-  debug: boolean;
-}
+export type ErrorCode = (typeof DOMAIN_ERROR_CODES)[keyof typeof DOMAIN_ERROR_CODES];
 
-export type JobStatus =
-  | "PENDING"
-  | "QUEUED"
-  | "RUNNING"
-  | "SUCCEEDED"
-  | "FAILED";
+export const WARNING_CODES = {
+  PARTIAL_EXTRACTION: "PARTIAL_EXTRACTION",
+  MISSING_FIELDS: "MISSING_FIELDS",
+  LOW_CONFIDENCE: "LOW_CONFIDENCE",
+  ARTIFACT_NOT_STORED: "ARTIFACT_NOT_STORED",
+} as const;
 
-export interface ImportWarning {
-  code: string;
-  message: string;
-  stepId?: string;
-  details?: Record<string, unknown>;
-}
+export type WarningCode = (typeof WARNING_CODES)[keyof typeof WARNING_CODES];
 
-export interface ImportError {
-  code: string;
-  message: string;
-  stepId?: string;
-  details?: Record<string, unknown>;
-}
-
-export interface EvidenceRef {
-  id: string;
-  type: "html" | "jsonld" | "text" | "image" | "video" | "other";
-  uri: string;
-  summary?: string;
-}
-
-export interface EvidenceBundle {
-  refs: EvidenceRef[];
-  summary?: string;
-}
-
-export interface ConfidenceReport {
-  overall: number;
-  fields: Record<string, number>;
-}
-
-export interface ImportJob {
-  id: string;
-  userId: string;
-  sourceType: SourceType;
-  payload: Record<string, unknown>;
-  options: ImportOptions;
-  status: JobStatus;
-  progressPct: number;
-  currentStep?: string;
-  warnings: ImportWarning[];
-  errors: ImportError[];
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface ImportResultMetaStep {
-  id: string;
-  status: "SUCCEEDED" | "FAILED";
-  durationMs: number;
-}
-
-export interface ImportResultMeta {
-  pipelineId: string;
-  steps: ImportResultMetaStep[];
-  llmPolicy: LlmPolicy;
-  debug: boolean;
-  startedAt: string;
-  endedAt: string;
-}
-
-export interface ImportResult {
-  recipe: Record<string, unknown>;
-  confidence: ConfidenceReport;
-  evidence: EvidenceBundle;
-  warnings: ImportWarning[];
-  errors: ImportError[];
-  meta: ImportResultMeta;
-}
+export type ConfidenceLevel = "high" | "medium" | "low";

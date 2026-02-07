@@ -1,17 +1,10 @@
-export type {
-  ConfidenceReport,
-  EvidenceBundle,
-  EvidenceRef,
-  ImportError,
-  ImportJob,
-  ImportOptions,
+// Domain exports
+
+export {
+  type EvidenceBundle,
   ImportResult,
-  ImportResultMeta,
-  ImportResultMetaStep,
-  ImportWarning,
-  JobStatus,
-  LlmPolicy,
-  SourceType
-} from "./types";
-export { SchemaOrgRecipeSchema } from "./schema-org-recipe";
-export type { SchemaOrgRecipe } from "./schema-org-recipe";
+  type RecipeJsonLd,
+} from "./entities.js";
+export * from "./events.js";
+export * from "./types.js";
+export * from "./value-objects.js";
