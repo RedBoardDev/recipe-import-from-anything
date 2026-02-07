@@ -1,0 +1,88 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.3.14/schema.json",
+  "root": true,
+  "vcs": {
+    "enabled": false,
+    "clientKind": "git",
+    "useIgnoreFile": false
+  },
+  "files": {
+    "includes": [
+      "src/**/*.ts",
+      "packages/**/*.ts",
+      "tests/**/*.ts",
+      "vitest.config.ts",
+      "!!**/node_modules",
+      "!!**/dist",
+      "!!**/.turbo",
+      "!!**/coverage",
+      "!!**/.next"
+    ]
+  },
+  "formatter": {
+    "enabled": true,
+    "lineWidth": 120,
+    "indentStyle": "space",
+    "formatWithErrors": true,
+    "indentWidth": 2
+  },
+  "assist": {
+    "actions": {
+      "source": {
+        "organizeImports": "on"
+      }
+    }
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "security": {
+        "noDangerouslySetInnerHtml": "off"
+      },
+      "complexity": {
+        "noBannedTypes": "off",
+        "noForEach": "warn",
+        "useFlatMap": "warn",
+        "noUselessCatch": "warn",
+        "useOptionalChain": "warn",
+        "useWhile": "warn"
+      },
+      "performance": {
+        "noDelete": "off"
+      },
+      "correctness": {
+        "noUnusedVariables": "warn",
+        "useExhaustiveDependencies": "off",
+        "useJsxKeyInIterable": "off",
+        "noChildrenProp": "off",
+        "noConstAssign": "warn",
+        "noUnreachable": "warn",
+        "noSwitchDeclarations": "error",
+        "useIsNan": "error",
+        "useValidTypeof": "error",
+        "noUnsafeOptionalChaining": "error"
+      },
+      "style": {
+        "noNonNullAssertion": "off",
+        "noUselessElse": "off",
+        "useTemplate": "warn",
+        "useFilenamingConvention": {
+          "level": "error",
+          "options": {
+            "strictCase": false,
+            "requireAscii": true,
+            "filenameCases": ["kebab-case"]
+          }
+        }
+      },
+      "a11y": {
+        "useKeyWithClickEvents": "off"
+      },
+      "suspicious": {
+        "noExplicitAny": "info",
+        "noDuplicateTestHooks": "off",
+        "noArrayIndexKey": "off"
+      }
+    }
+  }
+}

@@ -1,19 +1,14 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "module": "ESNext",
-    "moduleResolution": "Bundler",
-    "baseUrl": ".",
-    "paths": {
-      "@ria/domain": ["packages/domain/src/index.ts"],
-      "@ria/application": ["packages/application/src/index.ts"],
-      "@ria/pipelines": ["packages/pipelines/src/index.ts"],
-      "@ria/infrastructure": ["packages/infrastructure/src/index.ts"]
-    },
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
     "strict": true,
-    "noEmit": true,
+    "esModuleInterop": true,
     "skipLibCheck": true,
-    "resolveJsonModule": true,
-    "types": ["node"]
+    "forceConsistentCasingInFileNames": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true
   }
 }

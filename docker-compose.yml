@@ -1,34 +1,99 @@
 services:
-  postgres:
-    image: postgres:16
-    container_name: recipe-import-postgres
-    environment:
-      POSTGRES_USER: recipe
-      POSTGRES_PASSWORD: recipe
-      POSTGRES_DB: recipe_import
-    ports:
-      - "5433:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U recipe"]
-      interval: 5s
-      timeout: 3s
-      retries: 10
-
   redis:
-    image: redis:7
+    image: redis:7-alpine
     container_name: recipe-import-redis
-    ports:
-      - "6379:6379"
+    command: redis-server --appendonly no
     volumes:
       - redis_data:/data
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
-      timeout: 3s
-      retries: 10
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: recipe-import-api
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=${NODE_ENV:-production}
+      - PORT=3000
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - TEMP_INPUTS_PATH=/app/tmp/inputs
+      - JWT_SECRET=${JWT_SECRET:-dev-secret}
+      - JWT_ISSUER=${JWT_ISSUER:-recipe-import}
+      - JWT_AUDIENCE=${JWT_AUDIENCE:-recipe-import-api}
+      - API_RATE_LIMIT_MAX=${API_RATE_LIMIT_MAX:-100}
+      - API_RATE_LIMIT_WINDOW_MS=${API_RATE_LIMIT_WINDOW_MS:-60000}
+      - MAX_PAYLOAD_SIZE=${MAX_PAYLOAD_SIZE:-10485760}
+    volumes:
+      - temp_inputs:/app/tmp/inputs
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3000/health > /dev/null 2>&1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    restart: on-failure
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: "512M"
+        reservations:
+          cpus: "0.25"
+          memory: "256M"
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: recipe-import-worker
+    command: ["sh", "-c", "yarn start:worker"]
+    environment:
+      - NODE_ENV=${NODE_ENV:-production}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - TEMP_INPUTS_PATH=/app/tmp/inputs
+      - MAX_CONCURRENT_JOBS=${MAX_CONCURRENT_JOBS:-2}
+      - BULLMQ_LOCK_DURATION_MS=${BULLMQ_LOCK_DURATION_MS:-60000}
+      - BULLMQ_REMOVE_ON_COMPLETE=${BULLMQ_REMOVE_ON_COMPLETE:-100}
+      - BULLMQ_REMOVE_ON_FAIL=${BULLMQ_REMOVE_ON_FAIL:-100}
+      - BULLMQ_RATE_LIMIT_MAX=${BULLMQ_RATE_LIMIT_MAX:-}
+      - BULLMQ_RATE_LIMIT_DURATION_MS=${BULLMQ_RATE_LIMIT_DURATION_MS:-}
+      - BULLMQ_STALLED_INTERVAL_MS=${BULLMQ_STALLED_INTERVAL_MS:-}
+      - BULLMQ_MAX_STALLED_COUNT=${BULLMQ_MAX_STALLED_COUNT:-}
+    volumes:
+      - temp_inputs:/app/tmp/inputs
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: on-failure
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: "1G"
+        reservations:
+          cpus: "0.5"
+          memory: "512M"
+
+  test:
+    build:
+      context: .
+      dockerfile: Dockerfile.e2e
+    container_name: recipe-import-test
+    profiles: ["test"]
+    environment:
+      - NODE_ENV=test
+    command: ["sh", "-c", "yarn test"]
 
 volumes:
-  postgres_data:
   redis_data:
+  temp_inputs:

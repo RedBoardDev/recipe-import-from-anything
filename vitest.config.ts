@@ -1,28 +1,51 @@
-import path from "node:path";
+import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { defineConfig } from "vitest/config";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const rootDir = fileURLToPath(new URL(".", import.meta.url));
+const resolvePath = (path: string): string => resolve(rootDir, path);
 
 export default defineConfig({
   resolve: {
-    alias: {
-      "@ria/domain": path.resolve(__dirname, "packages/domain/src/index.ts"),
-      "@ria/application": path.resolve(__dirname, "packages/application/src/index.ts"),
-      "@ria/pipelines": path.resolve(__dirname, "packages/pipelines/src/index.ts"),
-      "@ria/infrastructure": path.resolve(__dirname, "packages/infrastructure/src/index.ts")
-    }
+    alias: [
+      { find: "@recipe/domain", replacement: resolvePath("packages/domain/src/index.ts") },
+      {
+        find: "@recipe/pipeline-contracts",
+        replacement: resolvePath("packages/pipeline-contracts/src/index.ts"),
+      },
+      {
+        find: "@recipe/pipeline-text/meta",
+        replacement: resolvePath("packages/pipelines/text/src/meta.ts"),
+      },
+      {
+        find: "@recipe/pipeline-text/runtime",
+        replacement: resolvePath("packages/pipelines/text/src/runtime.ts"),
+      },
+      {
+        find: "@recipe/pipeline-text",
+        replacement: resolvePath("packages/pipelines/text/src/index.ts"),
+      },
+      {
+        find: "@recipe/pipeline-url/meta",
+        replacement: resolvePath("packages/pipelines/url/src/meta.ts"),
+      },
+      {
+        find: "@recipe/pipeline-url/runtime",
+        replacement: resolvePath("packages/pipelines/url/src/runtime.ts"),
+      },
+      {
+        find: "@recipe/pipeline-url",
+        replacement: resolvePath("packages/pipelines/url/src/index.ts"),
+      },
+    ],
+    conditions: ["development", "module", "node", "default"],
   },
   test: {
-    environment: "node",
+    globals: true,
     include: ["**/*.test.ts"],
-    exclude: ["node_modules", "dist"],
-    pool: "threads",
-    poolOptions: {
-      threads: {
-        singleThread: true
-      }
-    }
-  }
+    coverage: {
+      provider: "v8",
+      reporter: ["text", "json", "html"],
+    },
+  },
 });

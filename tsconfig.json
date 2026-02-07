@@ -1,4 +1,27 @@
 {
   "extends": "./tsconfig.base.json",
-  "include": ["apps/**/*.ts", "packages/**/*.ts"]
+  "compilerOptions": {
+    "composite": true,
+    "outDir": "./dist",
+    "rootDir": "src",
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"]
+    }
+  },
+  "include": ["src/**/*"],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "tests/**/*",
+    "packages/**/*",
+    "src/domain/**/*",
+    "src/pipelines/**/*"
+  ],
+  "references": [
+    { "path": "./packages/domain" },
+    { "path": "./packages/pipeline-contracts" },
+    { "path": "./packages/pipelines/text" },
+    { "path": "./packages/pipelines/url" }
+  ]
 }
