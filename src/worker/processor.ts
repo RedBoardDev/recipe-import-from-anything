@@ -15,6 +15,7 @@ import { BullMQQueue } from "../infrastructure/bullmq/queue.js";
 import type { BullMQJobData } from "../infrastructure/bullmq/types.js";
 import { createFetchClient } from "../infrastructure/fetch.js";
 import { consoleLogger } from "../infrastructure/logger.js";
+import { createMistralClient } from "../infrastructure/mistral-client.js";
 import { tempInputStore } from "../infrastructure/temp-input-store.js";
 
 interface ProcessorConfig {
@@ -22,10 +23,20 @@ interface ProcessorConfig {
   debug?: boolean;
 }
 
+const CANCELLATION_POLL_INTERVAL_MS = 250;
+
+class CancellationRequestedError extends Error {
+  constructor(message = "Job cancellation requested") {
+    super(message);
+    this.name = "CancellationRequestedError";
+  }
+}
+
 export class RecipeProcessor {
   private queue: BullMQQueue | null = null;
   private worker: BullMQWorker<BullMQJobData> | null = null;
   private readonly registry = new PipelineRegistry();
+  private readonly llmClient = createMistralClient();
 
   constructor(private readonly config: ProcessorConfig = {}) {}
 
@@ -94,12 +105,31 @@ export class RecipeProcessor {
       });
     };
 
+    const stopCancellationMonitor = this.startCancellationMonitor({
+      queue,
+      jobId,
+      controller,
+      writeJobLog,
+    });
+
+    const throwIfCancellationRequested = async (
+      stepId: string,
+      phase: "step-started" | "step-completed",
+    ): Promise<void> => {
+      if (controller.signal.aborted) {
+        throw new CancellationRequestedError(`Job canceled during ${phase}: ${stepId}`);
+      }
+
+      if (await queue.isCanceled(jobId)) {
+        controller.abort();
+        writeJobLog(`Cancellation detected during ${phase}: ${stepId}`);
+        throw new CancellationRequestedError(`Job canceled during ${phase}: ${stepId}`);
+      }
+    };
+
     const reporter: PipelineReporter = {
       stepStarted: async (stepId) => {
-        if (await queue.isCanceled(jobId)) {
-          controller.abort();
-          return;
-        }
+        await throwIfCancellationRequested(stepId, "step-started");
         const stepIndex = meta.steps.findIndex((step) => step.id === stepId);
         const step = meta.steps[stepIndex];
         await bullmqJob.updateProgress({
@@ -114,6 +144,7 @@ export class RecipeProcessor {
       },
 
       stepCompleted: async (stepId) => {
+        await throwIfCancellationRequested(stepId, "step-completed");
         const stepIndex = meta.steps.findIndex((step) => step.id === stepId);
         const step = meta.steps[stepIndex];
         await bullmqJob.updateProgress({
@@ -139,6 +170,7 @@ export class RecipeProcessor {
     const deps: PipelineDeps = {
       fetch: createFetchClient(config?.network),
       inputs: tempInputStore,
+      llm: this.llmClient,
       logger: consoleLogger,
       signal: controller.signal,
       context: {
@@ -153,7 +185,7 @@ export class RecipeProcessor {
       const result = await runtime.execute(data.payload, deps, reporter);
       return result;
     } catch (error) {
-      if (controller.signal.aborted) {
+      if (error instanceof CancellationRequestedError || controller.signal.aborted) {
         throw new UnrecoverableError("canceled");
       }
       if (error instanceof Error) {
@@ -161,8 +193,18 @@ export class RecipeProcessor {
       }
       throw new Error("Pipeline execution failed");
     } finally {
+      stopCancellationMonitor();
       if (data.inputRef) {
-        await tempInputStore.delete(data.inputRef);
+        try {
+          await tempInputStore.delete(data.inputRef);
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : String(error);
+          consoleLogger.warn("Failed to cleanup temporary input reference", {
+            jobId: jobId.toString(),
+            inputRef: data.inputRef,
+            error: errorMessage,
+          });
+        }
       }
     }
   }
@@ -174,5 +216,60 @@ export class RecipeProcessor {
       return;
     }
     source.addEventListener("abort", () => target.abort(), { once: true });
+  }
+
+  private startCancellationMonitor({
+    queue,
+    jobId,
+    controller,
+    writeJobLog,
+  }: Readonly<{
+    queue: BullMQQueue;
+    jobId: JobId;
+    controller: AbortController;
+    writeJobLog: (message: string) => void;
+  }>): () => void {
+    let stopped = false;
+    let inFlight = false;
+
+    const stop = (): void => {
+      if (stopped) {
+        return;
+      }
+      stopped = true;
+      clearInterval(intervalId);
+    };
+
+    const checkCancellation = async (): Promise<void> => {
+      if (stopped || inFlight || controller.signal.aborted) {
+        return;
+      }
+
+      inFlight = true;
+      try {
+        if (await queue.isCanceled(jobId)) {
+          writeJobLog("Cancellation detected from queue monitor");
+          controller.abort();
+          stop();
+        }
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        consoleLogger.warn("Failed to check cancellation state", {
+          jobId: jobId.toString(),
+          error: errorMessage,
+        });
+      } finally {
+        inFlight = false;
+      }
+    };
+
+    const intervalId = setInterval(() => {
+      void checkCancellation();
+    }, CANCELLATION_POLL_INTERVAL_MS);
+
+    controller.signal.addEventListener("abort", stop, { once: true });
+    void checkCancellation();
+
+    return stop;
   }
 }

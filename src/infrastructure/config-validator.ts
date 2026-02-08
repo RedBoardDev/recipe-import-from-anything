@@ -27,9 +27,7 @@ export function validateEnvironment(): EnvValidationResult {
     return { valid: true, errors: [] };
   }
 
-  const errors = result.error.issues.map(
-    (issue) => `FATAL: ${issue.path.join(".")} ${issue.message}`
-  );
+  const errors = result.error.issues.map((issue) => `FATAL: ${issue.path.join(".")} ${issue.message}`);
 
   return { valid: false, errors };
 }
