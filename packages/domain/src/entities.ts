@@ -1,43 +1,6 @@
 import type { Warning } from "./events.js";
+import { normalizeRecipeJsonLd, type RecipeJsonLd } from "./recipe-jsonld.js";
 import type { Confidence } from "./value-objects.js";
-
-export interface RecipeJsonLd {
-  "@context": string;
-  "@type": "Recipe";
-  name: string;
-  description?: string;
-  author?: {
-    "@type": "Person" | "Organization";
-    name: string;
-  };
-  datePublished?: string;
-  prepTime?: string;
-  cookTime?: string;
-  totalTime?: string;
-  recipeYield?: string | number;
-  recipeIngredient?: string[];
-  instructions?: Array<{
-    "@type": "HowToStep" | "HowToSection";
-    text: string;
-    name?: string;
-    url?: string;
-  }>;
-  nutrition?: {
-    calories?: string;
-    proteinContent?: string;
-    fatContent?: string;
-    carbohydrateContent?: string;
-    fiberContent?: string;
-    sodiumContent?: string;
-  };
-  image?: string | string[];
-  keywords?: string;
-  cuisine?: string;
-  aggregateRating?: {
-    ratingValue: number;
-    reviewCount: number;
-  };
-}
 
 export interface EvidenceBundle {
   htmlTitle?: string;
@@ -71,7 +34,7 @@ export class ImportResult {
     sourceType: string,
     sourceValue: string,
   ) {
-    this._recipe = recipe;
+    this._recipe = normalizeRecipeJsonLd(recipe);
     this._confidence = confidence;
     this._evidence = evidence;
     this._warnings = warnings;
