@@ -21,7 +21,7 @@
   "references": [
     { "path": "./packages/domain" },
     { "path": "./packages/pipeline-contracts" },
-    { "path": "./packages/pipelines/text" },
-    { "path": "./packages/pipelines/url" }
+    { "path": "./packages/pipelines/images" },
+    { "path": "./packages/pipelines/text" }
   ]
 }

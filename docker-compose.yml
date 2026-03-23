@@ -17,10 +17,10 @@ services:
       dockerfile: Dockerfile
     container_name: recipe-import-api
     ports:
-      - "3000:3000"
+      - "${PORT:-3000}:${PORT:-3000}"
     environment:
       - NODE_ENV=${NODE_ENV:-production}
-      - PORT=3000
+      - PORT=${PORT:-3000}
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - TEMP_INPUTS_PATH=/app/tmp/inputs
@@ -36,7 +36,7 @@ services:
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3000/health > /dev/null 2>&1"]
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:${PORT:-3000}/health > /dev/null 2>&1"]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -69,6 +69,21 @@ services:
       - BULLMQ_RATE_LIMIT_DURATION_MS=${BULLMQ_RATE_LIMIT_DURATION_MS:-}
       - BULLMQ_STALLED_INTERVAL_MS=${BULLMQ_STALLED_INTERVAL_MS:-}
       - BULLMQ_MAX_STALLED_COUNT=${BULLMQ_MAX_STALLED_COUNT:-}
+      - MISTRAL_API_KEY=${MISTRAL_API_KEY:-}
+      - MISTRAL_MODEL=${MISTRAL_MODEL:-mistral-small-latest}
+      - MISTRAL_API_BASE_URL=${MISTRAL_API_BASE_URL:-https://api.mistral.ai}
+      - MISTRAL_TIMEOUT_MS=${MISTRAL_TIMEOUT_MS:-45000}
+      - MISTRAL_RETRY_ATTEMPTS=${MISTRAL_RETRY_ATTEMPTS:-2}
+      - MISTRAL_RETRY_BASE_DELAY_MS=${MISTRAL_RETRY_BASE_DELAY_MS:-500}
+      - MISTRAL_STRUCTURED_OUTPUT=${MISTRAL_STRUCTURED_OUTPUT:-false}
+      - MISTRAL_OCR_MODEL=${MISTRAL_OCR_MODEL:-mistral-ocr-latest}
+      - MISTRAL_OCR_TIMEOUT_MS=${MISTRAL_OCR_TIMEOUT_MS:-90000}
+      - MISTRAL_OCR_RETRY_ATTEMPTS=${MISTRAL_OCR_RETRY_ATTEMPTS:-2}
+      - MISTRAL_OCR_RETRY_BASE_DELAY_MS=${MISTRAL_OCR_RETRY_BASE_DELAY_MS:-700}
+      - BULLMQ_RETRY_ATTEMPTS=${BULLMQ_RETRY_ATTEMPTS:-2}
+      - BULLMQ_RETRY_BACKOFF_TYPE=${BULLMQ_RETRY_BACKOFF_TYPE:-exponential}
+      - BULLMQ_RETRY_BACKOFF_DELAY_MS=${BULLMQ_RETRY_BACKOFF_DELAY_MS:-5000}
+      - BULLMQ_JOB_TIMEOUT_MS=${BULLMQ_JOB_TIMEOUT_MS:-120000}
     volumes:
       - temp_inputs:/app/tmp/inputs
     depends_on:
