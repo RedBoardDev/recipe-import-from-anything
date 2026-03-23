@@ -1,7 +1,8 @@
-import type { ImportResult } from "@recipe/domain";
+import type { TextExtractionResult } from "@recipe/domain";
 import type { FetchClient, Logger, TempInputStore } from "./io.js";
 import type { LlmClient } from "./llm.js";
-import type { PipelineReporter } from "./reporter.js";
+import type { OcrClient } from "./ocr.js";
+import type { PipelineProgressReporter } from "./progress-reporter.js";
 
 export type PipelineExecutionContext = Readonly<{
   jobId: string;
@@ -14,11 +15,12 @@ export type PipelineDeps = Readonly<{
   fetch: FetchClient;
   inputs: TempInputStore;
   llm: LlmClient;
+  ocr?: OcrClient;
   logger: Logger;
   signal: AbortSignal;
   context: PipelineExecutionContext;
 }>;
 
 export type PipelineRuntime<TInput> = Readonly<{
-  execute(input: TInput, deps: PipelineDeps, reporter: PipelineReporter): Promise<ImportResult>;
+  execute(input: TInput, deps: PipelineDeps, reporter: PipelineProgressReporter): Promise<TextExtractionResult>;
 }>;

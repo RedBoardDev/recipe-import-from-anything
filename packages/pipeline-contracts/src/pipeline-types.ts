@@ -1,5 +1,6 @@
 import type { z } from "zod";
 
+// This mirrors StepName from @recipe/domain intentionally (different layers)
 export type StepCategory = "collecting" | "extracting" | "finalizing";
 
 export type StepDefinition = Readonly<{
