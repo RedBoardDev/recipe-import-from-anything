@@ -1,0 +1,33 @@
+{
+  "name": "@recipe/pipeline-images",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "development": "./src/index.ts",
+      "default": "./dist/index.js"
+    },
+    "./meta": {
+      "types": "./dist/meta.d.ts",
+      "development": "./src/meta.ts",
+      "default": "./dist/meta.js"
+    },
+    "./runtime": {
+      "types": "./dist/runtime.d.ts",
+      "development": "./src/runtime.ts",
+      "default": "./dist/runtime.js"
+    }
+  },
+  "dependencies": {
+    "@recipe/domain": "workspace:*",
+    "@recipe/pipeline-contracts": "workspace:*",
+    "zod": "^3.24.0"
+  }
+}
