@@ -2,9 +2,11 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "composite": true,
+    "module": "ESNext",
+    "moduleResolution": "bundler",
     "rootDir": "src",
     "outDir": "dist"
   },
-  "include": ["src/**/*"],
-  "references": [{ "path": "../domain-driven-design" }]
+  "include": ["src"],
+  "exclude": ["node_modules", "dist", ".turbo"]
 }

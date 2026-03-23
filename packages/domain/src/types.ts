@@ -1,26 +1,42 @@
+// This mirrors StepCategory from pipeline-contracts intentionally (different layers)
 export type StepName = "collecting" | "extracting" | "finalizing";
 
-export const DOMAIN_ERROR_CODES = {
-  JOB_NOT_FOUND: "JOB_NOT_FOUND",
-  RESULT_NOT_FOUND: "RESULT_NOT_FOUND",
-  JOB_NOT_SUCCEEDED: "JOB_NOT_SUCCEEDED",
-  JOB_NOT_CANCELABLE: "JOB_NOT_CANCELABLE",
-  INVALID_IDEMPOTENCY_KEY: "INVALID_IDEMPOTENCY_KEY",
-  UNAUTHORIZED: "UNAUTHORIZED",
-  FORBIDDEN: "FORBIDDEN",
-  INVALID_INPUT: "INVALID_INPUT",
-  INTERNAL_ERROR: "INTERNAL_ERROR",
+export type EvidenceBundle = Readonly<{
+  artifactRefs: readonly string[];
+  debug?: {
+    rawText: string;
+    extractionConfidence: number;
+    recipeConfidence: number;
+    sourceType: string;
+  };
+}>;
+
+export type PipelineStatus =
+  | "pending"
+  | "collecting"
+  | "extracting"
+  | "formatting"
+  | "completed"
+  | "failed"
+  | "canceled";
+
+export type ProgressCheckpoint =
+  | "job_pickup"
+  | "images_loaded"
+  | "ocr_started"
+  | "ocr_progress_1"
+  | "ocr_progress_2"
+  | "ocr_progress_3"
+  | "formatting_started"
+  | "completed";
+
+export const CHECKPOINT_PROGRESS: Record<ProgressCheckpoint, number> = {
+  job_pickup: 5,
+  images_loaded: 15,
+  ocr_started: 20,
+  ocr_progress_1: 40,
+  ocr_progress_2: 60,
+  ocr_progress_3: 80,
+  formatting_started: 90,
+  completed: 100,
 } as const;
-
-export type ErrorCode = (typeof DOMAIN_ERROR_CODES)[keyof typeof DOMAIN_ERROR_CODES];
-
-export const WARNING_CODES = {
-  PARTIAL_EXTRACTION: "PARTIAL_EXTRACTION",
-  MISSING_FIELDS: "MISSING_FIELDS",
-  LOW_CONFIDENCE: "LOW_CONFIDENCE",
-  ARTIFACT_NOT_STORED: "ARTIFACT_NOT_STORED",
-} as const;
-
-export type WarningCode = (typeof WARNING_CODES)[keyof typeof WARNING_CODES];
-
-export type ConfidenceLevel = "high" | "medium" | "low";

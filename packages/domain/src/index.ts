@@ -1,20 +1,6 @@
-// Domain exports
-
-export {
-  type EvidenceBundle,
-  ImportResult,
-} from "./entities.js";
-export * from "./events.js";
-export {
-  normalizeRecipeJsonLd,
-  type RecipeAggregateRating,
-  type RecipeAuthor,
-  type RecipeInstruction,
-  type RecipeJsonLd,
-  RecipeJsonLdSchema,
-  type RecipeJsonLdSchemaInput,
-  type RecipeJsonLdSchemaOutput,
-  type RecipeNutrition,
-} from "./recipe-jsonld.js";
+export * from "./domain-error.js";
+export * from "./entities/index.js";
+export * from "./schemas/index.js";
 export * from "./types.js";
-export * from "./value-objects.js";
+export * from "./value-objects/index.js";
+export type { TextExtractionResult } from "./extraction-result.js";
