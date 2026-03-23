@@ -17,6 +17,7 @@ import { ERROR_CODES } from "./errors/error-codes.js";
 import { errorHandler } from "./errors/error-handler.js";
 import { formatError } from "./helpers/response-format.js";
 import { createAuthPreHandler } from "./plugins/authentication.js";
+import { securityPlugin } from "./plugins/security.js";
 import { healthRoutes } from "./routes/health/index.js";
 import { importRoutes } from "./routes/import/index.js";
 import { inputsRoutes } from "./routes/inputs/index.js";
@@ -64,6 +65,8 @@ export async function buildServer(config: ServerConfig): Promise<FastifyInstance
   server.addContentTypeParser("application/octet-stream", { parseAs: "buffer" }, (_request, body, done) => {
     done(null, body);
   });
+
+  await securityPlugin(server);
 
   const rateLimitConfig = getRateLimitConfig();
   await server.register(rateLimit, {

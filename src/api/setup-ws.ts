@@ -135,7 +135,10 @@ export const websocketRoutes: FastifyPluginAsync<WebSocketRoutesOptions> = async
                 status: snapshot.status,
               };
               if (snapshot.progress) {
-                payload.progress = snapshot.progress;
+                payload.percent = snapshot.progress.percent;
+                payload.stepIndex = snapshot.progress.stepIndex;
+                payload.totalSteps = snapshot.progress.totalSteps;
+                payload.timestamp = snapshot.progress.timestamp;
               }
               if (snapshot.failedReason) {
                 payload.failedReason = snapshot.failedReason;

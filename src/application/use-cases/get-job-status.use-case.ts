@@ -1,17 +1,11 @@
 import type { JobId } from "@recipe/domain";
+import type { JobProgress, JobStatus } from "../domain/job.types.js";
 import type { QueuePort } from "../ports/queue.port.js";
 
 export interface GetJobStatusResult {
   id: string;
-  status: "queued" | "active" | "completed" | "failed" | "canceled";
-  progress?: {
-    stepId: string;
-    stepLabel: string;
-    stepCategory: "collecting" | "extracting" | "finalizing";
-    status: "started" | "completed";
-    stepIndex: number;
-    totalSteps: number;
-  };
+  status: JobStatus;
+  progress?: JobProgress;
   failedReason?: string;
   createdAt?: string;
 }
@@ -26,8 +20,8 @@ export class GetJobStatusUseCase {
     return {
       id: jobId.toString(),
       status: state.status,
-      progress: state.progress,
-      failedReason: state.failedReason,
+      ...(state.progress ? { progress: state.progress } : {}),
+      ...(state.failedReason ? { failedReason: state.failedReason } : {}),
     };
   }
 }

@@ -8,13 +8,19 @@ import { LlmResponseFormatSchema } from "@recipe/pipeline-contracts";
 import { z } from "zod";
 import type { LoggerPort } from "../application/ports.js";
 import { consoleLogger } from "./logger.js";
+import {
+  computeRetryDelayMs,
+  createAbortController,
+  isAbortError,
+  isRetryableHttpStatus,
+  waitWithSignal,
+} from "./mistral-shared.js";
 
 const DEFAULT_MODEL = "mistral-small-latest";
 const DEFAULT_TIMEOUT_MS = 45_000;
 const DEFAULT_BASE_URL = "https://api.mistral.ai";
 const DEFAULT_RETRY_ATTEMPTS = 2;
 const DEFAULT_RETRY_BASE_DELAY_MS = 500;
-const RETRYABLE_STATUS_CODES = new Set([408, 429, 500, 502, 503, 504]);
 
 const contentPartSchema = z.object({
   type: z.string().optional(),
@@ -139,22 +145,6 @@ const parseResponseFormat = (
   return ok(parsed.data);
 };
 
-const createAbortController = (externalSignal?: AbortSignal): AbortController => {
-  const controller = new AbortController();
-
-  if (!externalSignal) {
-    return controller;
-  }
-
-  if (externalSignal.aborted) {
-    controller.abort();
-    return controller;
-  }
-
-  externalSignal.addEventListener("abort", () => controller.abort(), { once: true });
-  return controller;
-};
-
 const buildRequestBody = (
   request: LlmCompletionRequest,
 ): Result<Record<string, unknown>, ResponseFormatValidationError> => {
@@ -189,38 +179,6 @@ const parseCompletionResponse = (payload: unknown): Result<LlmCompletionResponse
 
   return ok({ content });
 };
-
-const isAbortError = (error: unknown): boolean => error instanceof Error && error.name === "AbortError";
-
-const computeRetryDelayMs = (attempt: number, baseDelayMs: number): number => {
-  const backoff = baseDelayMs * 2 ** (attempt - 1);
-  const jitter = Math.floor(Math.random() * Math.max(1, Math.floor(baseDelayMs / 2)));
-  return backoff + jitter;
-};
-
-const waitWithSignal = async (delayMs: number, signal: AbortSignal): Promise<void> => {
-  if (delayMs <= 0) return;
-  if (signal.aborted) {
-    throw new Error("Aborted before retry delay elapsed");
-  }
-
-  await new Promise<void>((resolve, reject) => {
-    const timeoutId = setTimeout(() => {
-      signal.removeEventListener("abort", onAbort);
-      resolve();
-    }, delayMs);
-
-    const onAbort = (): void => {
-      clearTimeout(timeoutId);
-      signal.removeEventListener("abort", onAbort);
-      reject(new Error("Aborted during retry delay"));
-    };
-
-    signal.addEventListener("abort", onAbort, { once: true });
-  });
-};
-
-const isRetryableHttpStatus = (status: number): boolean => RETRYABLE_STATUS_CODES.has(status);
 
 export const createMistralClient = (logger: LoggerPort = consoleLogger): LlmClient => ({
   complete: async (request, options) => {

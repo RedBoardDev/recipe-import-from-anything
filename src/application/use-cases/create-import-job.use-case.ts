@@ -1,13 +1,14 @@
 import { IdempotencyKey, JobId, type UserId } from "@recipe/domain";
-import type { BullMQJobData } from "../../infrastructure/bullmq/types.js";
+import type { JobData, PipelineId } from "../domain/job.types.js";
 import type { LoggerPort } from "../ports/logger.port.js";
 import type { QueuePort } from "../ports/queue.port.js";
 
 export interface CreateImportJobInput {
-  pipelineId: string;
+  pipelineId: PipelineId;
   payload: unknown;
   inputRef?: string;
   idempotencyKey?: string;
+  debug?: boolean;
 }
 
 export interface CreateImportJobResult {
@@ -24,34 +25,28 @@ export class CreateImportJobUseCase {
   async execute(userId: UserId, input: CreateImportJobInput): Promise<CreateImportJobResult> {
     const idempotencyKey = input.idempotencyKey ? new IdempotencyKey(input.idempotencyKey) : undefined;
 
-    if (idempotencyKey) {
-      const existingJobId = await this.queuePort.checkIdempotency(userId, idempotencyKey);
-      if (existingJobId) {
-        this.logger.info("Duplicate job request", {
-          jobId: existingJobId,
-          userId: userId.toString(),
-        });
-        return { jobId: new JobId(existingJobId), isDuplicate: true };
-      }
-    }
-
     const jobId = new JobId();
-    const bullmqData: BullMQJobData = {
-      userId: userId.toString(),
+    const jobData: JobData = {
+      userId,
       pipelineId: input.pipelineId,
       payload: input.payload,
-      idempotencyKey: idempotencyKey?.value,
+      idempotencyKey,
       inputRef: input.inputRef,
+      debug: input.debug,
     };
 
-    await this.queuePort.enqueue(jobId, bullmqData);
+    const result = await this.queuePort.enqueueWithIdempotency(jobId, jobData);
 
-    if (idempotencyKey) {
-      await this.queuePort.setIdempotency(userId, idempotencyKey, jobId);
+    if (!result.created) {
+      this.logger.info("Duplicate job request", {
+        jobId: result.jobId,
+        userId: userId.toString(),
+      });
+      return { jobId: new JobId(result.jobId), isDuplicate: true };
     }
 
     this.logger.info("Job created", {
-      jobId: jobId.toString(),
+      jobId: result.jobId,
       pipelineId: input.pipelineId,
       userId: userId.toString(),
     });
